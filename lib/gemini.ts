@@ -332,6 +332,21 @@ function getMimeType(filePath: string): string {
   return mimeMap[ext] || "application/octet-stream";
 }
 
+function normalizeMimeType(mimeType?: string | null): string | undefined {
+  const normalizedMimeType = mimeType?.trim().split(";")[0]?.trim();
+
+  if (!normalizedMimeType) {
+    return undefined;
+  }
+
+  const mimeTypePattern =
+    /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i;
+
+  return mimeTypePattern.test(normalizedMimeType)
+    ? normalizedMimeType.toLowerCase()
+    : undefined;
+}
+
 /**
  * 커스텀 청킹 전략으로 파일 업로드
  *
@@ -363,14 +378,43 @@ export async function uploadWithCustomChunking(
 
   console.log(`\n📄 커스텀 청킹으로 업로드 중: ${displayName}`);
 
+  const fallbackMimeType = isFilePath
+    ? getMimeType(file)
+    : getMimeType(displayName);
   const resolvedMimeType =
-    mimeType || (isFilePath ? getMimeType(file) : "application/octet-stream");
+    normalizeMimeType(mimeType) ||
+    normalizeMimeType(fallbackMimeType) ||
+    "application/octet-stream";
 
-  const ai = getAI(apiKey);
+  const ai = getAI(apiKey); 
 
   const fileInput: string | Blob = isFilePath
     ? file
     : new Blob([file as any], { type: resolvedMimeType });
+  const uploadConfig: {
+    displayName: string;
+    customMetadata: typeof customMetadata;
+    chunkingConfig: {
+      whiteSpaceConfig: {
+        maxTokensPerChunk: number;
+        maxOverlapTokens: number;
+      };
+    };
+    mimeType?: string;
+  } = {
+    displayName,
+    customMetadata,
+    chunkingConfig: {
+      whiteSpaceConfig: {
+        maxTokensPerChunk,
+        maxOverlapTokens,
+      },
+    },
+  };
+
+  if (isFilePath) {
+    uploadConfig.mimeType = resolvedMimeType;
+  }
 
   // API 호출 시 전체 이름 사용
   const fullStoreName = getFullStoreName(fileStore.name);
@@ -380,17 +424,7 @@ export async function uploadWithCustomChunking(
     return await ai.fileSearchStores.uploadToFileSearchStore({
       file: fileInput,
       fileSearchStoreName: fullStoreName,
-      config: {
-        displayName,
-        customMetadata,
-        mimeType: resolvedMimeType,
-        chunkingConfig: {
-          whiteSpaceConfig: {
-            maxTokensPerChunk,
-            maxOverlapTokens,
-          },
-        },
-      },
+      config: uploadConfig,
     });
   });
 
