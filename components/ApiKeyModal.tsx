@@ -49,12 +49,6 @@ export function ApiKeyModal({ open, onOpenChange }: ApiKeyModalProps) {
       return;
     }
 
-    // Basic validation: Gemini API keys typically start with "AIza"
-    if (!trimmedKey.startsWith("AIza")) {
-      setError(t('errorInvalidFormat'));
-      return;
-    }
-
     setApiKey(trimmedKey);
     setError("");
     onOpenChange?.(false);

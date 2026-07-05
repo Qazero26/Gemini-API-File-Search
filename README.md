@@ -162,7 +162,6 @@ npm run type-check       # TypeScript type checking
 
 ### API Key Issues
 
-- Make sure your API key starts with `AIza`
 - Verify the key is active at [Google AI Studio](https://aistudio.google.com/apikey)
 - Clear browser cache and re-enter the key
 
