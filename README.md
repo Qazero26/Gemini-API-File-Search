@@ -51,7 +51,7 @@ An intuitive interface to manage File Search Stores, upload documents, and query
 ```bash
 git clone https://github.com/LeeJams/Gemini-API-File-Search.git
 cd Gemini-API-File-Search
-npm install
+npm install # winget install -e --id OpenJS.NodeJS.LTS (for windows)
 ```
 
 ### 2. Run Development Server
